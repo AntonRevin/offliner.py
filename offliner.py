@@ -117,8 +117,8 @@ def save_resources(soup: BeautifulSoup, resources: dict[str, str], dir: str, ses
                 if not url_hash in resources.keys(): # this resource has not been downloaded yet
                     filepath = os.path.join(dir, filename)
                     if not os.path.isfile(filepath):
+                        resource = session.get(file_url)
                         with open(filepath, 'wb') as file:
-                            resource = session.get(file_url)
                             file.write(resource.content)
                     resources[url_hash] = file_url
             except:
@@ -215,7 +215,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     
     # pre-populate all local paths
     local_paths = {}
-    for page, _ in target_pages_to_download.items():
+    for page in target_pages_to_download.keys():
         local_paths[page] = get_local_path(base_netloc, base_url_ind, target_dir, page, ".html")
 
     # Download files
@@ -223,12 +223,13 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     downloaded_files = 0
     with click.progressbar(
         length=len(target_pages_to_download),
-        label="Fetching",
+        label="Downloading",
         item_show_func=lambda a: a,
         show_pos=True
     ) as bar:
         downloaded_files = 0
-        for page, _ in target_pages_to_download.items():
+        for page in target_pages_to_download.keys():
+            bar.update((1 if downloaded_files > 0 else 0), page)
             # if we're not running the base page, we need to fetch the new one
             if downloaded_files > 0: 
                 soup = fetch_and_parse_page(page, use_selenium, session, driver)
@@ -240,15 +241,14 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
                 if l.has_attr("href"):
                     netloc = urlsplit(l["href"]).netloc
                     if len(netloc) == 0 or netloc == base_netloc:
-                        url_to_check = l["href"].lower().strip("/")
+                        url_to_check = l["href"].strip("/")
                         if len(netloc) == 0:
                             url_to_check = urljoin(base_url, l["href"]).strip("/")
                         if url_to_check in local_paths.keys():
                             l["href"] = local_paths[url_to_check]
             with open(local_paths[page], "wb") as file:
-                file.write(soup.prettify('utf-8'))
+                file.write(soup.prettify(encoding="utf-8"))
             downloaded_files += 1
-            bar.update(1, page)
 
     # Cleanup selenium
     if use_selenium:
