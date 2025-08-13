@@ -6,6 +6,9 @@ from enum import Enum
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from urllib.parse import urlsplit, urljoin
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 class errors(Enum):
     """
@@ -30,31 +33,22 @@ def fail(error) -> None:
     click.echo(error.msg)
     exit()
 
-def fetch_and_parse_page(target: str, use_selenium: bool) -> tuple[BeautifulSoup, requests.Session]:
+def fetch_and_parse_page(target: str, use_selenium: bool, session: requests.Session = None, driver: webdriver.Chrome = None) -> BeautifulSoup:
     """
     Downloads a target page using the selected method
     """
     soup = BeautifulSoup()
     if use_selenium: 
         try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.common.by import By
-
-            options = Options()
-            options.add_argument("--headless")
-            driver = webdriver.Chrome(options=options)
             driver.get(target)
-            return BeautifulSoup(driver.page_source, "lxml"), session
+            return BeautifulSoup(driver.page_source, "lxml")
         except:
             fail(errors.ERROR_LOADING_PAGE_SELENIUM)
     else:
         try:
-            session = requests.Session()
-            header = {"User-Agent": str(UserAgent.chrome)}
             response = session.get(target)
             if response.ok:
-                return BeautifulSoup(response.text, "lxml"), session
+                return BeautifulSoup(response.text, "lxml")
             else:
                 fail(errors.ERROR_LOADING_PAGE)
         except:
@@ -148,8 +142,18 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     click.echo()
     click.confirm("Would you like to proceed?")
 
+    # Setup the appropriate request engine
+    driver = None
+    if use_selenium:
+        options = Options()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome(options=options)
+    session = requests.Session()
+    header = {"User-Agent": str(UserAgent.chrome)}
+    session.headers = header
+
     # Parse the base page data
-    soup, session = fetch_and_parse_page(target, use_selenium)
+    soup = fetch_and_parse_page(target, use_selenium, session, driver)
 
     # Determine target pages
     target_pages_to_download = {get_url_hash(target): target}
@@ -204,7 +208,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
         for hash, page in target_pages_to_download.items():
             # if we're not running the base page, we need to fetch the new one
             if downloaded_files > 0: 
-                soup, session = fetch_and_parse_page(page, use_selenium)
+                soup = fetch_and_parse_page(page, use_selenium, session, driver)
             # download any static resources
             for tag, inner in resource_types.items():
                 save_resources(soup, resources, static_dir, session, target, tag, inner)
@@ -224,6 +228,10 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
                 file.write(soup.prettify('utf-8'))
             downloaded_files += 1
             bar.update(1, page)
+
+    # Cleanup selenium
+    if use_selenium:
+        driver.quit()
 
     # done!
     click.echo()
