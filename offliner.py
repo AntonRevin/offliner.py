@@ -54,6 +54,17 @@ def fetch_and_parse_page(target: str, use_selenium: bool, session: requests.Sess
         except:
             fail(errors.ERROR_LOADING_PAGE)
 
+def scan_for_target_pages(soup: BeautifulSoup, base_netloc: str, base_target) -> list[str]:
+    res = []
+    for l in soup.find_all("a"):
+        if l.has_attr("href"):
+            netloc = urlsplit(l["href"]).netloc
+            if len(netloc) == 0 or netloc == base_netloc:
+                dirty_url = l["href"]
+                if len(netloc) == 0: dirty_url = urljoin(base_target, l["href"])
+                res.append(dirty_url.strip("/"))
+    return res
+
 def get_url_hash(dirty_url: str) -> tuple[str, str]:
     """
     Hashes a provided url
@@ -155,7 +166,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     # Parse the base page data
     soup = fetch_and_parse_page(target, use_selenium, session, driver)
 
-    # Determine target pages
+    # Setup key variables
     target_pages_to_download = {target: 0}
     base_netloc = urlsplit(target).netloc
     base_url_ind = target.find(base_netloc) + len(base_netloc)
@@ -173,22 +184,35 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     resource_types = {"img": "src", "link": "href", "script": "src"}
     resources = {}
 
-    if depth > 0:
-        for l in soup.find_all("a"):
-            if l.has_attr("href"):
-                netloc = urlsplit(l["href"]).netloc
-                if len(netloc) == 0 or netloc == base_netloc:
-                    dirty_url = l["href"]
-                    if len(netloc) == 0: dirty_url = urljoin(target, l["href"])
-                    target_pages_to_download[dirty_url.strip("/")] = 0
-        click.echo("Found ", nl=False)
-        click.secho(len(target_pages_to_download), fg="yellow", nl=False)
-        click.echo(" pages to download")
-    else:
+    # Scan for pages to download
+    if depth == 0:
         click.echo("Just downloading ", nl=False)
         click.secho("one", fg="yellow", nl=False)
         click.echo(" page")
-
+    else:
+        iterations = []
+        res = scan_for_target_pages(soup, base_netloc, target)
+        iterations.append(res)
+        it_index = 0
+        depth -= 1
+        # continue iteratively searching deeper
+        while depth > 0:
+            res = []
+            for page_in_prev_it in iterations[it_index]:
+                soup = fetch_and_parse_page(page_in_prev_it, use_selenium, session, driver)
+                for p in scan_for_target_pages(soup, base_netloc, target):
+                    res.append(p)
+            iterations.append(res)
+            it_index += 1
+            depth -= 1
+        # de-duplicate results into a final list
+        for it in iterations:
+            for page in it:
+                target_pages_to_download[page] = 0
+        click.echo("Found ", nl=False)
+        click.secho(len(target_pages_to_download), fg="yellow", nl=False)
+        click.echo(" pages to download")
+    
     # pre-populate all local paths
     local_paths = {}
     for page, _ in target_pages_to_download.items():

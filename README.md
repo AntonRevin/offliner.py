@@ -43,5 +43,4 @@ For websites using client-side rendering (i.e., if the base case doesn't seem to
 In no particular order;
 - Multiple target mode
 - Wizzard mode (walk-through)
-- Depth > 1
 - Target filtering
