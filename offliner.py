@@ -156,7 +156,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     soup = fetch_and_parse_page(target, use_selenium, session, driver)
 
     # Determine target pages
-    target_pages_to_download = {get_url_hash(target): target}
+    target_pages_to_download = {target: 0}
     base_netloc = urlsplit(target).netloc
     base_url_ind = target.find(base_netloc) + len(base_netloc)
     base_url = target[:base_url_ind]
@@ -180,8 +180,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
                 if len(netloc) == 0 or netloc == base_netloc:
                     dirty_url = l["href"]
                     if len(netloc) == 0: dirty_url = urljoin(target, l["href"])
-                    url_hash, clean_url = get_url_hash(dirty_url)
-                    target_pages_to_download[url_hash] = clean_url
+                    target_pages_to_download[dirty_url.strip("/")] = 0
         click.echo("Found ", nl=False)
         click.secho(len(target_pages_to_download), fg="yellow", nl=False)
         click.echo(" pages to download")
@@ -192,7 +191,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
 
     # pre-populate all local paths
     local_paths = {}
-    for hash, page in target_pages_to_download.items():
+    for page, _ in target_pages_to_download.items():
         local_paths[page] = get_local_path(base_netloc, base_url_ind, target_dir, page, ".html")
 
     # Download files
@@ -205,7 +204,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
         show_pos=True
     ) as bar:
         downloaded_files = 0
-        for hash, page in target_pages_to_download.items():
+        for page, _ in target_pages_to_download.items():
             # if we're not running the base page, we need to fetch the new one
             if downloaded_files > 0: 
                 soup = fetch_and_parse_page(page, use_selenium, session, driver)
