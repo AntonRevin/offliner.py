@@ -1,11 +1,11 @@
 import click
 import os, sys
-import requests
-from fake_useragent import UserAgent
-from bs4 import BeautifulSoup
-from urllib.parse import urlsplit, urljoin
-from enum import Enum
 import hashlib
+import requests
+from enum import Enum
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from urllib.parse import urlsplit, urljoin
 
 class errors(Enum):
     """
@@ -121,10 +121,10 @@ def save_resources(soup: BeautifulSoup, resources: dict[str, str], dir: str, ses
 
 @click.command()
 @click.option("--target", "target", help="Base target url", type=str, required=True)
+@click.option("--output-dir", "output_dir", help="Location to store the offline page(s)", type=str, required=True)
 @click.option("--depth", "depth", help="Max search depth", type=int, default=1, show_default=True)
 @click.option("--just-this", "just_this", help="Only download the target page (sets depth to 0)", is_flag=True, show_default=True)
-@click.option("--output-dir", "output_dir", help="Location to store the offline page(s)", type=str, required=True)
-@click.option("--use-browser", "use_selenium", help="Spawn a browser instance to render pages (for websites that render using javascript). Note that this is much slower", type=bool, default=False, show_default=True)
+@click.option("--use-browser", "use_selenium", help="Spawn a browser instance to render pages (for websites that render using javascript). Note that this is much slower", is_flag=True, show_default=True)
 def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     """
     Tool for downloading an offline version of webpages.
