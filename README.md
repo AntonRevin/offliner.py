@@ -8,18 +8,18 @@ I was looking for an easy way to keep a local copy of the [odin docs](https://pk
     - *This step is optional, but highly recommended*
 2. Install the dependencies using your choice of package manager, for example, pip
 ```console
-(venv)> pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 3. Check that everything is working
 ```console
-(venv)> python offliner.py --help
+python offliner.py --help
 ```
 
 # Usage
 ## Basic use-case:
 1. Provide a target url (using `--target` or `-t`) and local folder (using `--output-dir` or `-out`) to download the content to:
 ```console
-(venv)> python offliner.py -t https://pkg.odin-lang.org/core/ --out C:\Users\user\Downloads\sites
+python offliner.py -t https://pkg.odin-lang.org/core/ --out C:\Users\user\Downloads\sites
 ```
 2. The programme will ask you to confirm the provided settings, confirm with `y`.
 
@@ -44,7 +44,7 @@ For websites using client-side rendering (i.e., if the base case doesn't seem to
 |`--just-this`|`-this`|Downloads only the provided target page (sets depth to 0)|   |
 |`--depth`|`-d`|Lets you select the target depth to use when scraping, provide an integer ≥ 0|`--depth 2`|
 |`--use-browser`|`-b`|Use a headless browser to visit sites instead of a basic get, useful for sites that render using client-side javascript (I'm looking at you, `<noscript>`). Note that using this option will be **MUCH SLOWER**|   |
-|`--help`||Displays usage information|`> python offliner.py --help`|
+|`--help`||Displays usage information|`python offliner.py --help`|
 
 ## Planned features
 In no particular order;
