@@ -1,7 +1,7 @@
 # offliner.py
 A simple script for downloading a local copy of websites, including static assets, for offline use.
 
-I was looking for an easy way to keep a local copy of the [odin docs](https://pkg.odin-lang.org/) ahead of a long train-ride (thank you, Deutche Bahn Wifi and terrible cell service) but found that other solutions downloaded way too much content, were overly complicated for such a simple use-case, or had poor configurability.
+I was looking for an easy way to keep a local copy of the [odin docs](https://pkg.odin-lang.org/) ahead of a long train-ride (thank you, Deutsche Bahn Wifi and terrible cell service) but found that other solutions either downloaded way too much content, were overly complicated for such a simple use-case, or had poor configurability.
 
 ## Installation
 1. Create and activate a [python virtual environment](https://docs.python.org/3/library/venv.html) in the same folder as the repo
