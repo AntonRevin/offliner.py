@@ -221,8 +221,6 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
                             url_to_check = urljoin(base_url, l["href"]).strip("/")
                         if url_to_check in local_paths.keys():
                             l["href"] = local_paths[url_to_check]
-                        else: 
-                            l["href"] = "BROKEN"
             with open(local_paths[page], "wb") as file:
                 file.write(soup.prettify('utf-8'))
             downloaded_files += 1
