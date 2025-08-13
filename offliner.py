@@ -143,15 +143,18 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
 
     # Sanity check before execution
     click.echo()
-    click.secho("⚙️  offliner.py", fg="yellow", bold=True)
+    click.secho("⚙️  offliner.py", fg="yellow")
     click.echo("You are about to download the site ", nl=False)
     click.secho(target, fg="green", nl=False)
-    click.echo(" using a depth of", nl=False)
-    click.secho(F" [{depth}]", fg="green", nl=False)
+    if depth > 0:
+        click.echo(" using a search depth of ", nl=False)
+        click.secho(depth, fg="green", nl=False)
     click.echo(" to ", nl=False)
     click.secho(output_dir, fg="green")
     click.echo()
-    click.confirm("Would you like to proceed?")
+    if not click.confirm("Would you like to proceed?"):
+        click.echo("Aborting...")
+        exit()
 
     # Setup the appropriate request engine
     driver = None
@@ -190,6 +193,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
         click.secho("one", fg="yellow", nl=False)
         click.echo(" page")
     else:
+        click.echo("Searching for pages to download...")
         iterations = []
         res = scan_for_target_pages(soup, base_netloc, target)
         iterations.append(res)
@@ -220,6 +224,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
 
     # Download files
     click.echo()
+    click.echo("Starting download...")
     downloaded_files = 0
     with click.progressbar(
         length=len(target_pages_to_download),
@@ -228,6 +233,7 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
         show_pos=True
     ) as bar:
         downloaded_files = 0
+        last_page = ""
         for page in target_pages_to_download.keys():
             bar.update((1 if downloaded_files > 0 else 0), page)
             # if we're not running the base page, we need to fetch the new one
@@ -249,6 +255,8 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
             with open(local_paths[page], "wb") as file:
                 file.write(soup.prettify(encoding="utf-8"))
             downloaded_files += 1
+            last_page = page
+        bar.update(1, last_page)
 
     # Cleanup selenium
     if use_selenium:
@@ -259,9 +267,19 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
     click.secho("Done!", fg="green")
     click.echo("Downloaded ", nl=False)
     click.secho(downloaded_files, fg="yellow", nl=False)
-    click.echo(" pages and ", nl=False)
-    click.secho(len(resources), fg="yellow", nl=False)
-    click.echo(" static files to ", nl=False)
+    if downloaded_files > 1:
+        click.echo(" pages and ", nl=False)
+    else:
+        click.echo(" page and ", nl=False)
+    if len(resources) > 1:    
+        click.secho(len(resources), fg="yellow", nl=False)
+        click.echo(" static files to ", nl=False)
+    elif len(resources) == 1:
+        click.secho(len(resources), fg="yellow", nl=False)
+        click.echo(" static file to ", nl=False)
+    elif len(resources) == 0:
+        click.secho("no", fg="yellow", nl=False)
+        click.echo(" static files to ")
     click.secho(target_dir, fg="yellow")
 
 # main
