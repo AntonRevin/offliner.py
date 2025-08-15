@@ -249,9 +249,14 @@ def offliner(target, depth, just_this, output_dir, use_selenium) -> None:
                     if len(netloc) == 0 or netloc == base_netloc:
                         url_to_check = l["href"].strip("/")
                         if len(netloc) == 0:
-                            url_to_check = urljoin(base_url, l["href"]).strip("/")
+                            url_to_check = urljoin(base_url, l["href"])
                         if url_to_check in local_paths.keys():
                             l["href"] = local_paths[url_to_check]
+                        else:
+                            ind = url_to_check.find("#")
+                            if ind > -1:
+                                if url_to_check[:ind].strip("/") in local_paths.keys():
+                                    l["href"] = local_paths[url_to_check[:ind].strip("/")] + url_to_check[ind:] 
             with open(local_paths[page], "wb") as file:
                 file.write(soup.prettify(encoding="utf-8"))
             downloaded_files += 1
